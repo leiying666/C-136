@@ -1,0 +1,125 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+#include<string.h>
+#include<errno.h>
+#include<stdlib.h>
+#include<math.h>
+#include<stdio.h>
+
+
+struct queue {
+	int data[1000];
+	int head;
+	int tail;
+};
+
+struct stack {
+	int data[20];
+	int top;
+};
+
+int book[20];
+
+void chupai(struct queue* q, struct stack* s) {
+	int t;
+	t = q->data[q->head]; //小哼出一张牌
+	q->head++;
+	// 判断小哼当前打出的牌是否能赢得桌上的牌
+	if (book[t] == 0) { //表明桌上没有牌面为t的牌
+		//小哼此轮没有赢牌
+		s->top++;
+		s->data[s->top] = t;  //再把打出的牌放到桌上，即入栈
+		book[t] = 1;  //标记桌上现在已经有牌面为t的牌
+	}
+	else {
+		//小哼此轮可以赢牌
+		q->data[q->tail] = t; //因为此轮可以赢牌，所以紧接着把刚才打出的牌又放到手中牌的末尾
+		q->tail++;
+		while (s->data[s->top] != t) {  //把桌上可以赢得的牌（从当前桌面最顶部一张牌开始取，直至取到与打出的牌相同为止）依次放到手中牌的末尾
+			book[s->data[s->top]] = 0; //取消标记
+			q->data[q->tail] = s->data[s->top]; ///依次放入队尾
+			q->tail++;
+			s->top--;  //栈中少了一张牌，所以栈顶要减1
+		}
+
+		//收起最后一张一样的牌，并将标志置0 
+		book[s->data[s->top]] = 0; //取消标记
+		q->data[q->tail] = s->data[s->top]; ///依次放入队尾
+		q->tail++;
+		s->top--;  //栈中少了一张牌，所以栈顶要减1
+	}
+}
+
+
+int main() {
+	struct queue quene1, quene2;
+	struct stack stack1;
+	struct queue* q1, * q2;
+	struct stack* s;
+	q1 = &quene1; q2 = &quene2;
+	s = &stack1;
+	int i, t;
+	int hengN, haN;
+	//初始化队列q1和q2为空，此时两人手中都还没有牌
+	q1->head = 0; q1->tail = 0;
+	q2->head = 0; q2->tail = 0;
+	//初始化栈s为空，最开始的时候桌上也没有牌
+	s->top = 0;
+	//初始化用来标记的数组，用来标记哪些牌已经在桌上
+	for (i = 0; i < 20; i++) {
+		book[i] = 0;
+	}
+
+	// 获取小哼和小哈手中牌的初始数目 
+	scanf("%d %d", &hengN, &haN);
+
+	// 获取小哼初始牌面
+	for (i = 0; i < hengN; i++) {
+		scanf("%d", &q1->data[i]); //读入一个数到队尾
+		q1->tail++; //队尾往后挪一位
+	}
+	// 获取小哈初始牌面
+	for (i = 0; i < haN; i++) {
+		scanf("%d", &q2->data[i]); //读入一个数到队尾
+		q2->tail++; //队尾往后挪一位
+	}
+
+	//现在准备工作已经基本上做好了，游戏正式开始，小哼先出牌。
+	while (1) //当队列不为空的时候执行循环
+	{
+		chupai(q1, s);  //小哼出牌
+		if (q1->head == q1->tail)
+		{
+			printf("小哈win\n");
+			printf("小哈当前手中的牌是");
+			for (i = q2->head; i < q2->tail; i++)
+			{
+				printf(" %d", q2->data[i]);
+			}
+			break;
+		}
+		chupai(q2, s);  //小哈出牌
+		if (q2->head == q2->tail)
+		{
+			printf("小哼win\n");
+			printf("小哼当前手中的牌是");
+			for (i = q1->head; i < q1->tail; i++)
+			{
+				printf(" %d", q1->data[i]);
+			}
+			break;
+		}
+	}
+
+	if (s->top > 0) //如果桌上有牌则依次输出桌上的牌
+	{
+		printf("\n桌上的牌是");
+		for (i = 1; i <= s->top; i++) {
+			printf(" %d", s->data[i]);
+		}
+	}
+	else {
+		printf("\n桌上已经没有牌了");
+	}
+
+	return 0;
+}
